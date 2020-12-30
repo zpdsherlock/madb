@@ -2,23 +2,23 @@
 # save origin command
 CUSTOM_CMD="$*"
 if [[ $1 == "-s" ]]; then
-  # record serial number
-  SPECIFIC_DEVICE="-s $2"
-  CODE=$3
-  # remove '-s'
-  CUSTOM_CMD=${CUSTOM_CMD/"-s"/""}
-  # remove serial number
-  CUSTOM_CMD=${CUSTOM_CMD/$2/""}
+    # record serial number
+    SPECIFIC_DEVICE="-s $2"
+    CODE=$3
+    # remove '-s'
+    CUSTOM_CMD=${CUSTOM_CMD/"-s"/""}
+    # remove serial number
+    CUSTOM_CMD=${CUSTOM_CMD/$2/""}
 else
-  SPECIFIC_DEVICE=""
-  CODE=$1
+    SPECIFIC_DEVICE=""
+    CODE=$1
 fi
 
 CUSTOM_CMD=${CUSTOM_CMD/${CODE}/""}
 CUSTOM_CMD_ARR=(${CUSTOM_CMD//\\s/})
 
 case ${CODE} in
-  "help"|"-h"|"--help")
+"help" | "-h" | "--help")
     echo "Usage: madb [-s SERIAL] [CODE] [COMMAND...]"
     echo ""
     echo "global options:"
@@ -131,117 +131,167 @@ case ${CODE} in
     echo -e "\t\tMETHOD:"
     echo -e "\t\t\tInput Method on device. Get it from \`madb ime\`"
     ;;
-  "version")
+"version")
     echo "[madb]"
     echo "madb version 2020.11.26"
     echo "[adb]"
     adb version
     ;;
-  "cinstall")
-    curl ${CUSTOM_CMD} > ztemp.apk
+"wifi")
+    adb kill-server
+    sleep 1
+    adb devices
+    adb ${SPECIFIC_DEVICE} tcpip 5555
+    sleep 2
+    TARGET_IP=$(adb ${SPECIFIC_DEVICE} shell netstat -a | grep -v tcp6 | grep -v 127.0.0.1 | grep -v 0.0.0.0 | grep tcp | awk '{print $4}' | sed 's/:.*$//g' | sed -n '1p')
+    adb connect ${TARGET_IP}:5555
+    ;;
+"cinstall")
+    curl ${CUSTOM_CMD} >ztemp.apk
     if [[ ! -z "${CUSTOM_CMD_ARR[1]}" ]]; then
-      adb ${SPECIFIC_DEVICE} uninstall ${CUSTOM_CMD_ARR[1]}
+        adb ${SPECIFIC_DEVICE} uninstall ${CUSTOM_CMD_ARR[1]}
     fi
     adb ${SPECIFIC_DEVICE} install -r ztemp.apk
     rm -rf ztemp.apk
     ;;
-  "apps")
+"apps")
     adb ${SPECIFIC_DEVICE} shell pm list packages
     ;;
-  "pmclear")
+"pmclear")
     adb ${SPECIFIC_DEVICE} shell pm clear ${CUSTOM_CMD}
     ;;
-  "grantall")
+"grantall")
     adb ${SPECIFIC_DEVICE} shell pm grant ${CUSTOM_CMD} android.permission.READ_PHONE_STATE
     adb ${SPECIFIC_DEVICE} shell pm grant ${CUSTOM_CMD} android.permission.READ_CONTACTS
     adb ${SPECIFIC_DEVICE} shell pm grant ${CUSTOM_CMD} android.permission.WRITE_EXTERNAL_STORAGE
     adb ${SPECIFIC_DEVICE} shell pm grant ${CUSTOM_CMD} android.permission.ACCESS_COARSE_LOCATION
     adb ${SPECIFIC_DEVICE} shell pm grant ${CUSTOM_CMD} android.permission.ACCESS_FINE_LOCATION
     ;;
-  "wakeup")
+"wakeup")
     adb ${SPECIFIC_DEVICE} shell monkey -p ${CUSTOM_CMD} -c android.intent.category.LAUNCHER 1
     ;;
-  "wstart" )
+"wstart")
     adb ${SPECIFIC_DEVICE} shell am start -n ${CUSTOM_CMD}
     ;;
-  "amstart" )
+"amstart")
     adb ${SPECIFIC_DEVICE} shell am start -a android.intent.action.VIEW -d ${CUSTOM_CMD}
     ;;
-  "amstop")
+"amstop")
     adb ${SPECIFIC_DEVICE} shell am force-stop ${CUSTOM_CMD}
     ;;
-  "event")
+"event")
     adb ${SPECIFIC_DEVICE} shell input keyevent ${CUSTOM_CMD}
     ;;
-  "swipe")
+"swipe")
     adb ${SPECIFIC_DEVICE} shell input swipe ${CUSTOM_CMD}
     ;;
-  "tap")
+"scroll")
+    if [[ "${CUSTOM_CMD_ARR[0]}" == "down" ]]; then
+        DEV_SIZE=$(adb ${SPECIFIC_DEVICE} shell wm size | sed 's/ //g')
+        DEV_WIDTH=$(echo ${DEV_SIZE} | sed 's/.*:\([[:digit:]]*\)x\([0-9]*\)/\1/g')
+        DEV_HEIGHT=$(echo ${DEV_SIZE} | sed 's/.*:\([[:digit:]]*\)x\([0-9]*\)/\2/g')
+        FROM_X=$(expr ${DEV_WIDTH} \/ 2)
+        FROM_Y=$(expr ${DEV_HEIGHT} \/ 4 \* 3)
+        TO_X=$(expr ${DEV_WIDTH} \/ 2)
+        TO_Y=$(expr ${DEV_HEIGHT} \/ 4)
+        adb ${SPECIFIC_DEVICE} shell input swipe ${FROM_X} ${FROM_Y} ${TO_X} ${TO_Y} 100
+    elif [[ "${CUSTOM_CMD_ARR[0]}" == "up" ]]; then
+        DEV_SIZE=$(adb ${SPECIFIC_DEVICE} shell wm size | sed 's/ //g')
+        DEV_WIDTH=$(echo ${DEV_SIZE} | sed 's/.*:\([[:digit:]]*\)x\([0-9]*\)/\1/g')
+        DEV_HEIGHT=$(echo ${DEV_SIZE} | sed 's/.*:\([[:digit:]]*\)x\([0-9]*\)/\2/g')
+        FROM_X=$(expr ${DEV_WIDTH} \/ 2)
+        FROM_Y=$(expr ${DEV_HEIGHT} \/ 4)
+        TO_X=$(expr ${DEV_WIDTH} \/ 2)
+        TO_Y=$(expr ${DEV_HEIGHT} \/ 4 \* 3)
+        adb ${SPECIFIC_DEVICE} shell input swipe ${FROM_X} ${FROM_Y} ${TO_X} ${TO_Y} 100
+    elif [[ "${CUSTOM_CMD_ARR[0]}" == "left" ]]; then
+        DEV_SIZE=$(adb ${SPECIFIC_DEVICE} shell wm size | sed 's/ //g')
+        DEV_WIDTH=$(echo ${DEV_SIZE} | sed 's/.*:\([[:digit:]]*\)x\([0-9]*\)/\1/g')
+        DEV_HEIGHT=$(echo ${DEV_SIZE} | sed 's/.*:\([[:digit:]]*\)x\([0-9]*\)/\2/g')
+        FROM_X=$(expr ${DEV_WIDTH} \/ 4)
+        FROM_Y=$(expr ${DEV_HEIGHT} \/ 2)
+        TO_X=$(expr ${DEV_WIDTH} \/ 4 \* 3)
+        TO_Y=$(expr ${DEV_HEIGHT} \/ 2)
+        adb ${SPECIFIC_DEVICE} shell input swipe ${FROM_X} ${FROM_Y} ${TO_X} ${TO_Y} 100
+    elif [[ "${CUSTOM_CMD_ARR[0]}" == "right" ]]; then
+        DEV_SIZE=$(adb ${SPECIFIC_DEVICE} shell wm size | sed 's/ //g')
+        DEV_WIDTH=$(echo ${DEV_SIZE} | sed 's/.*:\([[:digit:]]*\)x\([0-9]*\)/\1/g')
+        DEV_HEIGHT=$(echo ${DEV_SIZE} | sed 's/.*:\([[:digit:]]*\)x\([0-9]*\)/\2/g')
+        FROM_X=$(expr ${DEV_WIDTH} \/ 4 \* 3)
+        FROM_Y=$(expr ${DEV_HEIGHT} \/ 2)
+        TO_X=$(expr ${DEV_WIDTH} \/ 4)
+        TO_Y=$(expr ${DEV_HEIGHT} \/ 2)
+        adb ${SPECIFIC_DEVICE} shell input swipe ${FROM_X} ${FROM_Y} ${TO_X} ${TO_Y} 100
+    else
+        echo "Not supported"
+    fi
+    ;;
+"tap")
     adb ${SPECIFIC_DEVICE} shell input tap ${CUSTOM_CMD}
     ;;
-  "intext")
+"intext")
     adb ${SPECIFIC_DEVICE} shell input text ${CUSTOM_CMD}
     ;;
-  "screencap")
+"screencap")
     if [[ ! -z "${CUSTOM_CMD}" ]]; then
-      SAVE_FILE=`echo ${CUSTOM_CMD} | sed 's/ //g'`
+        SAVE_FILE=$(echo ${CUSTOM_CMD} | sed 's/ //g')
     else
-      SAVE_FILE="screencap.png"
+        SAVE_FILE="screencap.png"
     fi
     adb ${SPECIFIC_DEVICE} shell screencap -p /sdcard/${SAVE_FILE}
     adb ${SPECIFIC_DEVICE} pull /sdcard/${SAVE_FILE} .
     adb ${SPECIFIC_DEVICE} shell rm -rf /sdcard/${SAVE_FILE}
     ;;
-  "dump")
+"dump")
     SAVE_FILE="pageview"
     if [[ ${CUSTOM_CMD_ARR[0]} == "-f" ]]; then
-      SAVE_FILE=${CUSTOM_CMD_ARR[1]}
+        SAVE_FILE=${CUSTOM_CMD_ARR[1]}
     fi
     adb ${SPECIFIC_DEVICE} shell uiautomator dump /sdcard/${SAVE_FILE}.uix
     adb ${SPECIFIC_DEVICE} pull /sdcard/${SAVE_FILE}.uix .
     adb ${SPECIFIC_DEVICE} shell rm -rf /sdcard/${SAVE_FILE}.uix
     ;;
-  "record")
-    REC_CMP=`grep '^[[:digit:]]*$' <<< "${CUSTOM_CMD_ARR[0]}"`
+"record")
+    REC_CMP=$(grep '^[[:digit:]]*$' <<<"${CUSTOM_CMD_ARR[0]}")
     SAVE_FILE="madb-record"
     OFFSET_CMD=1
     if [[ ${CUSTOM_CMD_ARR[1]} == "-f" ]]; then
-      SAVE_FILE=${CUSTOM_CMD_ARR[2]}
-      OFFSET_CMD=3
+        SAVE_FILE=${CUSTOM_CMD_ARR[2]}
+        OFFSET_CMD=3
     fi
-    if [[ ! -z "${REC_CMP}" ]];then
-      adb ${SPECIFIC_DEVICE} shell screenrecord --time-limit ${CUSTOM_CMD_ARR[0]} ${CUSTOM_CMD_ARR[*]:${OFFSET_CMD}:(${#CUSTOM_CMD_ARR[*]}-1)} /sdcard/${SAVE_FILE}.mp4
+    if [[ ! -z "${REC_CMP}" ]]; then
+        adb ${SPECIFIC_DEVICE} shell screenrecord --time-limit ${CUSTOM_CMD_ARR[0]} ${CUSTOM_CMD_ARR[*]:${OFFSET_CMD}:(${#CUSTOM_CMD_ARR[*]} - 1)} /sdcard/${SAVE_FILE}.mp4
     else
-      adb ${SPECIFIC_DEVICE} shell screenrecord --time-limit 10 ${CUSTOM_CMD} /sdcard/${SAVE_FILE}.mp4
-    fi 
+        adb ${SPECIFIC_DEVICE} shell screenrecord --time-limit 10 ${CUSTOM_CMD} /sdcard/${SAVE_FILE}.mp4
+    fi
     adb ${SPECIFIC_DEVICE} pull /sdcard/${SAVE_FILE}.mp4 ./${SAVE_FILE}.mp4
     adb ${SPECIFIC_DEVICE} shell rm -rf /sdcard/${SAVE_FILE}.mp4
     ;;
-  "top")
+"top")
     adb ${SPECIFIC_DEVICE} shell dumpsys activity | grep "top-activity"
     ;;
-  "atop")
+"atop")
     adb ${SPECIFIC_DEVICE} shell dumpsys activity top | grep ACTIVITY
     ;;
-  "wtop")
+"wtop")
     adb ${SPECIFIC_DEVICE} shell dumpsys window windows | grep "Window #"
     ;;
-  "socket")
+"socket")
     adb ${SPECIFIC_DEVICE} shell cat /proc/net/unix
     ;;
-  "devtool")
+"devtool")
     adb ${SPECIFIC_DEVICE} shell cat /proc/net/unix | grep "devtool"
     ;;
-  "rotate")
+"rotate")
     adb ${SPECIFIC_DEVICE} shell content insert --uri content://settings/system --bind name:s:accelerometer_rotation --bind value:i:${CUSTOM_CMD}
     ;;
-  "ime")
+"ime")
     adb ${SPECIFIC_DEVICE} shell ime list -s
     ;;
-  "sime")
+"sime")
     adb ${SPECIFIC_DEVICE} shell ime set ${CUSTOM_CMD}
     ;;
-    *)
+*)
     adb $@
     ;;
 esac
