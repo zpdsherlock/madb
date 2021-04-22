@@ -14,7 +14,11 @@ else
     CODE=$1
 fi
 
-CUSTOM_CMD=${CUSTOM_CMD/${CODE}/""}
+if [[ "${CUSTOM_CMD}" == "${CODE}" ]]; then
+    CUSTOM_CMD=""
+else
+    CUSTOM_CMD=${CUSTOM_CMD/${CODE} /""}
+fi
 CUSTOM_CMD_ARR=(${CUSTOM_CMD//\\s/})
 
 case ${CODE} in
@@ -182,55 +186,65 @@ case ${CODE} in
 "event")
     adb ${SPECIFIC_DEVICE} shell input keyevent ${CUSTOM_CMD}
     ;;
+"tap")
+    adb ${SPECIFIC_DEVICE} shell input tap ${CUSTOM_CMD}
+    ;;
 "swipe")
     adb ${SPECIFIC_DEVICE} shell input swipe ${CUSTOM_CMD}
     ;;
 "scroll")
     if [[ "${CUSTOM_CMD_ARR[0]}" == "down" ]]; then
-        DEV_SIZE=$(adb ${SPECIFIC_DEVICE} shell wm size | sed 's/ //g')
-        DEV_WIDTH=$(echo ${DEV_SIZE} | sed 's/.*:\([[:digit:]]*\)x\([0-9]*\)/\1/g')
-        DEV_HEIGHT=$(echo ${DEV_SIZE} | sed 's/.*:\([[:digit:]]*\)x\([0-9]*\)/\2/g')
-        FROM_X=$(expr ${DEV_WIDTH} \/ 2)
-        FROM_Y=$(expr ${DEV_HEIGHT} \/ 4 \* 3)
-        TO_X=$(expr ${DEV_WIDTH} \/ 2)
-        TO_Y=$(expr ${DEV_HEIGHT} \/ 4)
-        adb ${SPECIFIC_DEVICE} shell input swipe ${FROM_X} ${FROM_Y} ${TO_X} ${TO_Y} 100
-    elif [[ "${CUSTOM_CMD_ARR[0]}" == "up" ]]; then
-        DEV_SIZE=$(adb ${SPECIFIC_DEVICE} shell wm size | sed 's/ //g')
+        DEV_SIZE=$(adb ${SPECIFIC_DEVICE} shell wm size | sed 's/ //g' | sed 's/\r//g')
         DEV_WIDTH=$(echo ${DEV_SIZE} | sed 's/.*:\([[:digit:]]*\)x\([0-9]*\)/\1/g')
         DEV_HEIGHT=$(echo ${DEV_SIZE} | sed 's/.*:\([[:digit:]]*\)x\([0-9]*\)/\2/g')
         FROM_X=$(expr ${DEV_WIDTH} \/ 2)
         FROM_Y=$(expr ${DEV_HEIGHT} \/ 4)
         TO_X=$(expr ${DEV_WIDTH} \/ 2)
         TO_Y=$(expr ${DEV_HEIGHT} \/ 4 \* 3)
-        adb ${SPECIFIC_DEVICE} shell input swipe ${FROM_X} ${FROM_Y} ${TO_X} ${TO_Y} 100
+        adb ${SPECIFIC_DEVICE} shell input swipe ${FROM_X} ${FROM_Y} ${TO_X} ${TO_Y} 1000
+    elif [[ "${CUSTOM_CMD_ARR[0]}" == "up" ]]; then
+        DEV_SIZE=$(adb ${SPECIFIC_DEVICE} shell wm size | sed 's/ //g' | sed 's/\r//g')
+        DEV_WIDTH=$(echo ${DEV_SIZE} | sed 's/.*:\([[:digit:]]*\)x\([0-9]*\)/\1/g')
+        DEV_HEIGHT=$(echo ${DEV_SIZE} | sed 's/.*:\([[:digit:]]*\)x\([0-9]*\)/\2/g')
+        FROM_X=$(expr ${DEV_WIDTH} \/ 2)
+        FROM_Y=$(expr ${DEV_HEIGHT} \/ 4 \* 3)
+        TO_X=$(expr ${DEV_WIDTH} \/ 2)
+        TO_Y=$(expr ${DEV_HEIGHT} \/ 4)
+        adb ${SPECIFIC_DEVICE} shell input swipe ${FROM_X} ${FROM_Y} ${TO_X} ${TO_Y} 1000
     elif [[ "${CUSTOM_CMD_ARR[0]}" == "left" ]]; then
-        DEV_SIZE=$(adb ${SPECIFIC_DEVICE} shell wm size | sed 's/ //g')
+        DEV_SIZE=$(adb ${SPECIFIC_DEVICE} shell wm size | sed 's/ //g' | sed 's/\r//g')
         DEV_WIDTH=$(echo ${DEV_SIZE} | sed 's/.*:\([[:digit:]]*\)x\([0-9]*\)/\1/g')
         DEV_HEIGHT=$(echo ${DEV_SIZE} | sed 's/.*:\([[:digit:]]*\)x\([0-9]*\)/\2/g')
         FROM_X=$(expr ${DEV_WIDTH} \/ 4)
         FROM_Y=$(expr ${DEV_HEIGHT} \/ 2)
         TO_X=$(expr ${DEV_WIDTH} \/ 4 \* 3)
         TO_Y=$(expr ${DEV_HEIGHT} \/ 2)
-        adb ${SPECIFIC_DEVICE} shell input swipe ${FROM_X} ${FROM_Y} ${TO_X} ${TO_Y} 100
+        adb ${SPECIFIC_DEVICE} shell input swipe ${FROM_X} ${FROM_Y} ${TO_X} ${TO_Y} 1000
     elif [[ "${CUSTOM_CMD_ARR[0]}" == "right" ]]; then
-        DEV_SIZE=$(adb ${SPECIFIC_DEVICE} shell wm size | sed 's/ //g')
+        DEV_SIZE=$(adb ${SPECIFIC_DEVICE} shell wm size | sed 's/ //g' | sed 's/\r//g')
         DEV_WIDTH=$(echo ${DEV_SIZE} | sed 's/.*:\([[:digit:]]*\)x\([0-9]*\)/\1/g')
         DEV_HEIGHT=$(echo ${DEV_SIZE} | sed 's/.*:\([[:digit:]]*\)x\([0-9]*\)/\2/g')
         FROM_X=$(expr ${DEV_WIDTH} \/ 4 \* 3)
         FROM_Y=$(expr ${DEV_HEIGHT} \/ 2)
         TO_X=$(expr ${DEV_WIDTH} \/ 4)
         TO_Y=$(expr ${DEV_HEIGHT} \/ 2)
-        adb ${SPECIFIC_DEVICE} shell input swipe ${FROM_X} ${FROM_Y} ${TO_X} ${TO_Y} 100
+        adb ${SPECIFIC_DEVICE} shell input swipe ${FROM_X} ${FROM_Y} ${TO_X} ${TO_Y} 1000
     else
         echo "Not supported"
     fi
     ;;
-"tap")
-    adb ${SPECIFIC_DEVICE} shell input tap ${CUSTOM_CMD}
-    ;;
 "intext")
     adb ${SPECIFIC_DEVICE} shell input text ${CUSTOM_CMD}
+    ;;
+"content")
+    echo ${CUSTOM_CMD}
+    adb ${SPECIFIC_DEVICE} shell am broadcast -a ADB_INPUT_TEXT --es msg "${CUSTOM_CMD}"
+    ;;
+"del")
+    adb ${SPECIFIC_DEVICE} shell am broadcast -a ADB_INPUT_CODE --ei code 67
+    ;;
+"clear")
+    adb ${SPECIFIC_DEVICE} shell am broadcast -a ADB_CLEAR_TEXT
     ;;
 "screencap")
     if [[ ! -z "${CUSTOM_CMD}" ]]; then
@@ -268,19 +282,22 @@ case ${CODE} in
     adb ${SPECIFIC_DEVICE} shell rm -rf /sdcard/${SAVE_FILE}.mp4
     ;;
 "top")
-    adb ${SPECIFIC_DEVICE} shell dumpsys activity | grep "top-activity"
+    adb ${SPECIFIC_DEVICE} shell dumpsys activity | grep -a "top-activity"
+    ;;
+"screen")
+    adb ${SPECIFIC_DEVICE} shell dumpsys activity | grep -a "mResumedActivity"
     ;;
 "atop")
-    adb ${SPECIFIC_DEVICE} shell dumpsys activity top | grep ACTIVITY
+    adb ${SPECIFIC_DEVICE} shell dumpsys activity top | grep -a "ACTIVITY"
     ;;
 "wtop")
-    adb ${SPECIFIC_DEVICE} shell dumpsys window windows | grep "Window #"
+    adb ${SPECIFIC_DEVICE} shell dumpsys window windows | grep -a "Window #"
     ;;
 "socket")
     adb ${SPECIFIC_DEVICE} shell cat /proc/net/unix
     ;;
 "devtool")
-    adb ${SPECIFIC_DEVICE} shell cat /proc/net/unix | grep "devtool"
+    adb ${SPECIFIC_DEVICE} shell cat /proc/net/unix | grep -a "devtool"
     ;;
 "rotate")
     adb ${SPECIFIC_DEVICE} shell content insert --uri content://settings/system --bind name:s:accelerometer_rotation --bind value:i:${CUSTOM_CMD}
@@ -290,6 +307,27 @@ case ${CODE} in
     ;;
 "sime")
     adb ${SPECIFIC_DEVICE} shell ime set ${CUSTOM_CMD}
+    ;;
+"map")
+    adb ${SPECIFIC_DEVICE} push ${CUSTOM_CMD_ARR[1]} /data/local/tmp/${CUSTOM_CMD_ARR[0]}_map.txt
+    adb ${SPECIFIC_DEVICE} push ${CUSTOM_CMD_ARR[2]} /data/local/tmp/${CUSTOM_CMD_ARR[0]}_resmap.txt
+    ;;
+"img")
+    adb ${SPECIFIC_DEVICE} shell am broadcast -a android.intent.action.MEDIA_SCANNER_SCAN_FILE -d file://${CUSTOM_CMD}
+    ;;
+"test")
+    echo "\${CODE}: [${CODE}]"
+    echo "\${CUSTOM_CMD}: [${CUSTOM_CMD}]"
+    echo "params amount: ${#CUSTOM_CMD_ARR[*]}"
+    for ((i = 0; i < ${#CUSTOM_CMD_ARR[*]}; i++)); do
+        echo "param ${i}: [${CUSTOM_CMD_ARR[i]}]"
+    done
+    if [[ ${#CUSTOM_CMD_ARR[*]} > 1 ]]; then
+        echo "params from 2: [${CUSTOM_CMD_ARR[*]:1:(${#CUSTOM_CMD_ARR[*]} - 1)}]"
+    fi
+    if [[ ${#CUSTOM_CMD_ARR[*]} > 2 ]]; then
+        echo "params from 2: [${CUSTOM_CMD_ARR[*]:2:(${#CUSTOM_CMD_ARR[*]} - 1)}]"
+    fi
     ;;
 *)
     adb $@
