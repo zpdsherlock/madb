@@ -211,6 +211,69 @@ case ${CODE} in
 "amstop")
     adb ${SPECIFIC_DEVICE} shell am force-stop ${CUSTOM_CMD}
     ;;
+"event")
+    adb ${SPECIFIC_DEVICE} shell input keyevent ${CUSTOM_CMD}
+    ;;
+"tap")
+    adb ${SPECIFIC_DEVICE} shell input tap ${CUSTOM_CMD}
+    ;;
+"swipe")
+    adb ${SPECIFIC_DEVICE} shell input swipe ${CUSTOM_CMD}
+    ;;
+"scroll")
+    if [[ "${CUSTOM_CMD_ARR[0]}" == "down" ]]; then
+        DEV_SIZE=$(adb ${SPECIFIC_DEVICE} shell wm size | sed 's/ //g' | sed 's/\r//g')
+        DEV_WIDTH=$(echo ${DEV_SIZE} | sed 's/.*:\([[:digit:]]*\)x\([0-9]*\)/\1/g')
+        DEV_HEIGHT=$(echo ${DEV_SIZE} | sed 's/.*:\([[:digit:]]*\)x\([0-9]*\)/\2/g')
+        FROM_X=$(expr ${DEV_WIDTH} \/ 2)
+        FROM_Y=$(expr ${DEV_HEIGHT} \/ 4)
+        TO_X=$(expr ${DEV_WIDTH} \/ 2)
+        TO_Y=$(expr ${DEV_HEIGHT} \/ 4 \* 3)
+        adb ${SPECIFIC_DEVICE} shell input swipe ${FROM_X} ${FROM_Y} ${TO_X} ${TO_Y} 1000
+    elif [[ "${CUSTOM_CMD_ARR[0]}" == "up" ]]; then
+        DEV_SIZE=$(adb ${SPECIFIC_DEVICE} shell wm size | sed 's/ //g' | sed 's/\r//g')
+        DEV_WIDTH=$(echo ${DEV_SIZE} | sed 's/.*:\([[:digit:]]*\)x\([0-9]*\)/\1/g')
+        DEV_HEIGHT=$(echo ${DEV_SIZE} | sed 's/.*:\([[:digit:]]*\)x\([0-9]*\)/\2/g')
+        FROM_X=$(expr ${DEV_WIDTH} \/ 2)
+        FROM_Y=$(expr ${DEV_HEIGHT} \/ 4 \* 3)
+        TO_X=$(expr ${DEV_WIDTH} \/ 2)
+        TO_Y=$(expr ${DEV_HEIGHT} \/ 4)
+        adb ${SPECIFIC_DEVICE} shell input swipe ${FROM_X} ${FROM_Y} ${TO_X} ${TO_Y} 1000
+    elif [[ "${CUSTOM_CMD_ARR[0]}" == "left" ]]; then
+        DEV_SIZE=$(adb ${SPECIFIC_DEVICE} shell wm size | sed 's/ //g' | sed 's/\r//g')
+        DEV_WIDTH=$(echo ${DEV_SIZE} | sed 's/.*:\([[:digit:]]*\)x\([0-9]*\)/\1/g')
+        DEV_HEIGHT=$(echo ${DEV_SIZE} | sed 's/.*:\([[:digit:]]*\)x\([0-9]*\)/\2/g')
+        FROM_X=$(expr ${DEV_WIDTH} \/ 4)
+        FROM_Y=$(expr ${DEV_HEIGHT} \/ 2)
+        TO_X=$(expr ${DEV_WIDTH} \/ 4 \* 3)
+        TO_Y=$(expr ${DEV_HEIGHT} \/ 2)
+        adb ${SPECIFIC_DEVICE} shell input swipe ${FROM_X} ${FROM_Y} ${TO_X} ${TO_Y} 1000
+    elif [[ "${CUSTOM_CMD_ARR[0]}" == "right" ]]; then
+        DEV_SIZE=$(adb ${SPECIFIC_DEVICE} shell wm size | sed 's/ //g' | sed 's/\r//g')
+        DEV_WIDTH=$(echo ${DEV_SIZE} | sed 's/.*:\([[:digit:]]*\)x\([0-9]*\)/\1/g')
+        DEV_HEIGHT=$(echo ${DEV_SIZE} | sed 's/.*:\([[:digit:]]*\)x\([0-9]*\)/\2/g')
+        FROM_X=$(expr ${DEV_WIDTH} \/ 4 \* 3)
+        FROM_Y=$(expr ${DEV_HEIGHT} \/ 2)
+        TO_X=$(expr ${DEV_WIDTH} \/ 4)
+        TO_Y=$(expr ${DEV_HEIGHT} \/ 2)
+        adb ${SPECIFIC_DEVICE} shell input swipe ${FROM_X} ${FROM_Y} ${TO_X} ${TO_Y} 1000
+    else
+        echo "Not supported"
+    fi
+    ;;
+"intext")
+    adb ${SPECIFIC_DEVICE} shell input text ${CUSTOM_CMD}
+    ;;
+"content")
+    echo ${CUSTOM_CMD}
+    adb ${SPECIFIC_DEVICE} shell am broadcast -a ADB_INPUT_TEXT --es msg "${CUSTOM_CMD}"
+    ;;
+"del")
+    adb ${SPECIFIC_DEVICE} shell am broadcast -a ADB_INPUT_CODE --ei code 67
+    ;;
+"clear")
+    adb ${SPECIFIC_DEVICE} shell am broadcast -a ADB_CLEAR_TEXT
+    ;;
 "test")
     echo "\${CODE}: [${CODE}]"
     echo "\${CUSTOM_CMD}: [${CUSTOM_CMD}]"
