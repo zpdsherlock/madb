@@ -274,6 +274,44 @@ case ${CODE} in
 "clear")
     adb ${SPECIFIC_DEVICE} shell am broadcast -a ADB_CLEAR_TEXT
     ;;
+"screencap")
+    if [[ ! -z "${CUSTOM_CMD}" ]]; then
+        SAVE_FILE=$(echo ${CUSTOM_CMD} | sed 's/ //g')
+    else
+        SAVE_FILE="screencap.png"
+    fi
+    adb ${SPECIFIC_DEVICE} shell screencap -p /sdcard/${SAVE_FILE}
+    adb ${SPECIFIC_DEVICE} pull /sdcard/${SAVE_FILE} .
+    adb ${SPECIFIC_DEVICE} shell rm -rf /sdcard/${SAVE_FILE}
+    ;;
+"dump")
+    SAVE_FILE="pageview"
+    if [[ ${CUSTOM_CMD_ARR[0]} == "-f" ]]; then
+        SAVE_FILE=${CUSTOM_CMD_ARR[1]}
+    fi
+    adb ${SPECIFIC_DEVICE} shell uiautomator dump /sdcard/${SAVE_FILE}.uix
+    adb ${SPECIFIC_DEVICE} pull /sdcard/${SAVE_FILE}.uix .
+    adb ${SPECIFIC_DEVICE} shell rm -rf /sdcard/${SAVE_FILE}.uix
+    ;;
+"record")
+    REC_CMP=$(grep '^[[:digit:]]*$' <<<"${CUSTOM_CMD_ARR[0]}")
+    SAVE_FILE="madb-record"
+    OFFSET_CMD=1
+    if [[ ${CUSTOM_CMD_ARR[1]} == "-f" ]]; then
+        SAVE_FILE=${CUSTOM_CMD_ARR[2]}
+        OFFSET_CMD=3
+    fi
+    if [[ ! -z "${REC_CMP}" ]]; then
+        adb ${SPECIFIC_DEVICE} shell screenrecord --time-limit ${CUSTOM_CMD_ARR[0]} ${CUSTOM_CMD_ARR[*]:${OFFSET_CMD}:(${#CUSTOM_CMD_ARR[*]} - 1)} /sdcard/${SAVE_FILE}.mp4
+    else
+        adb ${SPECIFIC_DEVICE} shell screenrecord --time-limit 10 ${CUSTOM_CMD} /sdcard/${SAVE_FILE}.mp4
+    fi
+    adb ${SPECIFIC_DEVICE} pull /sdcard/${SAVE_FILE}.mp4 ./${SAVE_FILE}.mp4
+    adb ${SPECIFIC_DEVICE} shell rm -rf /sdcard/${SAVE_FILE}.mp4
+    ;;
+"img")
+    adb ${SPECIFIC_DEVICE} shell am broadcast -a android.intent.action.MEDIA_SCANNER_SCAN_FILE -d file://${CUSTOM_CMD}
+    ;;
 "test")
     echo "\${CODE}: [${CODE}]"
     echo "\${CUSTOM_CMD}: [${CUSTOM_CMD}]"
