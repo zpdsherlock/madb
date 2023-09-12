@@ -169,6 +169,48 @@ case ${CODE} in
     echo "[adb]"
     adb version
     ;;
+"wifi")
+    adb kill-server
+    sleep 1
+    adb devices
+    adb ${SPECIFIC_DEVICE} tcpip 5555
+    sleep 2
+    TARGET_IP=$(adb ${SPECIFIC_DEVICE} shell netstat -a | grep -v tcp6 | grep -v 127.0.0.1 | grep -v 0.0.0.0 | grep tcp | awk '{print $4}' | sed 's/:.*$//g' | sed -n '1p')
+    adb connect ${TARGET_IP}:5555
+    ;;
+"cinstall")
+    curl ${CUSTOM_CMD} >ztemp.apk
+    if [[ ! -z "${CUSTOM_CMD_ARR[1]}" ]]; then
+        adb ${SPECIFIC_DEVICE} uninstall ${CUSTOM_CMD_ARR[1]}
+    fi
+    adb ${SPECIFIC_DEVICE} install -r ztemp.apk
+    rm -rf ztemp.apk
+    ;;
+"apps")
+    adb ${SPECIFIC_DEVICE} shell pm list packages
+    ;;
+"pmclear")
+    adb ${SPECIFIC_DEVICE} shell pm clear ${CUSTOM_CMD}
+    ;;
+"grantall")
+    adb ${SPECIFIC_DEVICE} shell pm grant ${CUSTOM_CMD} android.permission.READ_PHONE_STATE
+    adb ${SPECIFIC_DEVICE} shell pm grant ${CUSTOM_CMD} android.permission.READ_CONTACTS
+    adb ${SPECIFIC_DEVICE} shell pm grant ${CUSTOM_CMD} android.permission.WRITE_EXTERNAL_STORAGE
+    adb ${SPECIFIC_DEVICE} shell pm grant ${CUSTOM_CMD} android.permission.ACCESS_COARSE_LOCATION
+    adb ${SPECIFIC_DEVICE} shell pm grant ${CUSTOM_CMD} android.permission.ACCESS_FINE_LOCATION
+    ;;
+"wakeup")
+    adb ${SPECIFIC_DEVICE} shell monkey -p ${CUSTOM_CMD} -c android.intent.category.LAUNCHER 1
+    ;;
+"wstart")
+    adb ${SPECIFIC_DEVICE} shell am start -n ${CUSTOM_CMD}
+    ;;
+"amstart")
+    adb ${SPECIFIC_DEVICE} shell am start -a android.intent.action.VIEW -d ${CUSTOM_CMD}
+    ;;
+"amstop")
+    adb ${SPECIFIC_DEVICE} shell am force-stop ${CUSTOM_CMD}
+    ;;
 "test")
     echo "\${CODE}: [${CODE}]"
     echo "\${CUSTOM_CMD}: [${CUSTOM_CMD}]"
