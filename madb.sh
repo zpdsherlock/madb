@@ -312,6 +312,33 @@ case ${CODE} in
 "img")
     adb ${SPECIFIC_DEVICE} shell am broadcast -a android.intent.action.MEDIA_SCANNER_SCAN_FILE -d file://${CUSTOM_CMD}
     ;;
+"top")
+    adb ${SPECIFIC_DEVICE} shell dumpsys activity | grep -a "top-activity"
+    ;;
+"screen")
+    adb ${SPECIFIC_DEVICE} shell dumpsys activity | grep -a "mResumedActivity"
+    ;;
+"atop")
+    adb ${SPECIFIC_DEVICE} shell dumpsys activity top | grep -a "ACTIVITY"
+    ;;
+"wtop")
+    adb ${SPECIFIC_DEVICE} shell dumpsys window windows | grep -a "Window #"
+    ;;
+"socket")
+    adb ${SPECIFIC_DEVICE} shell cat /proc/net/unix
+    ;;
+"devtool")
+    adb ${SPECIFIC_DEVICE} shell cat /proc/net/unix | grep -a "devtool"
+    ;;
+"rotate")
+    adb ${SPECIFIC_DEVICE} shell content insert --uri content://settings/system --bind name:s:accelerometer_rotation --bind value:i:${CUSTOM_CMD}
+    ;;
+"ime")
+    adb ${SPECIFIC_DEVICE} shell ime list -s
+    ;;
+"sime")
+    adb ${SPECIFIC_DEVICE} shell ime set ${CUSTOM_CMD}
+    ;;
 "test")
     echo "\${CODE}: [${CODE}]"
     echo "\${CUSTOM_CMD}: [${CUSTOM_CMD}]"
