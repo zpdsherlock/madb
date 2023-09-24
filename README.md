@@ -63,11 +63,11 @@ CODE:
     intext <string> (Default: touchscreen)
         Description: Input Action.
     content
-        Description: Input Action for ADBKeyBoard.
+        Description: Input Action for ADBKeyBoard (https://github.com/senzhk/ADBKeyBoard).
     del
-        Description: Text deleting.
+        Description: Text deleting for ADBKeyBoard (https://github.com/senzhk/ADBKeyBoard).
     clear
-        Description: Text clearing.
+        Description: Text clearing for ADBKeyBoard (https://github.com/senzhk/ADBKeyBoard).
     screencap [FILE_NAME]
         Description: Take screencap of device.
     dump [FILE_NAME]

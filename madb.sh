@@ -105,11 +105,11 @@ case ${CODE} in
     echo -e "\tintext <string> (Default: touchscreen)"
     echo -e "\t\tDescription: Input Action."
     echo -e "\tcontent"
-    echo -e "\t\tDescription: Input Action for ADBKeyBoard."
+    echo -e "\t\tDescription: Input Action for ADBKeyBoard (https://github.com/senzhk/ADBKeyBoard)."
     echo -e "\tdel"
-    echo -e "\t\tDescription: Text deleting."
+    echo -e "\t\tDescription: Text deleting for ADBKeyBoard (https://github.com/senzhk/ADBKeyBoard)."
     echo -e "\tclear"
-    echo -e "\t\tDescription: Text clearing."
+    echo -e "\t\tDescription: Text clearing for ADBKeyBoard (https://github.com/senzhk/ADBKeyBoard)."
     echo -e "\tscreencap [FILE_NAME]"
     echo -e "\t\tDescription: Take screencap of device."
     echo -e "\tdump [FILE_NAME]"
@@ -256,6 +256,7 @@ case ${CODE} in
     fi
     ;;
 "intext")
+    CUSTOM_CMD=${CUSTOM_CMD// /"%s"}
     adb ${SPECIFIC_DEVICE} shell input text ${CUSTOM_CMD}
     ;;
 "content")
@@ -336,6 +337,7 @@ case ${CODE} in
 "test")
     echo "\${CODE}: [${CODE}]"
     echo "\${CUSTOM_CMD}: [${CUSTOM_CMD}]"
+    echo "\${CUSTOM_CMD} for intext: ${CUSTOM_CMD// /"%s"}"
     echo "params amount: ${#CUSTOM_CMD_ARR[*]}"
     for ((i = 0; i < ${#CUSTOM_CMD_ARR[*]}; i++)); do
         echo "param ${i}: [${CUSTOM_CMD_ARR[i]}]"
