@@ -18,8 +18,7 @@ if [[ $1 == "-s" ]]; then
         exit 1
     fi
     CODE=$3
-    # remove space and '-s'
-    CUSTOM_CMD=${CUSTOM_CMD// /}
+    # remove '-s'
     CUSTOM_CMD=${CUSTOM_CMD/"-s"/""}
     # remove serial number
     CUSTOM_CMD=${CUSTOM_CMD/$2/""}
@@ -46,6 +45,7 @@ if [[ "${CUSTOM_CMD}" == "${CODE}" ]]; then
     CUSTOM_CMD=""
 else
     CUSTOM_CMD=${CUSTOM_CMD/${CODE} /""}
+    CUSTOM_CMD="${CUSTOM_CMD#"${CUSTOM_CMD%%[![:space:]]*}"}"
 fi
 CUSTOM_CMD_ARR=(${CUSTOM_CMD//\\s/})
 
