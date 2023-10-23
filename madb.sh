@@ -23,12 +23,13 @@ if [[ $1 == "-s" ]]; then
     # remove serial number
     CUSTOM_CMD=${CUSTOM_CMD/$2/""}
 else
+    CODE=$1
     if [ ${#options[@]} -eq 0 ]; then
         echo "No devices!"
         exit 1
     elif [ ${#options[@]} -eq 1 ]; then
         SPECIFIC_DEVICE="-s ${options[0]}"
-    else
+    elif [ "${CODE}" != "devices" ]; then
         select choice in "${options[@]}"; do
         case $choice in
             *)
@@ -38,7 +39,6 @@ else
         esac
         done
     fi
-    CODE=$1
 fi
 
 if [[ "${CUSTOM_CMD}" == "${CODE}" ]]; then
@@ -343,13 +343,13 @@ case ${CODE} in
         echo "param ${i}: [${CUSTOM_CMD_ARR[i]}]"
     done
     if [[ ${#CUSTOM_CMD_ARR[*]} > 1 ]]; then
-        echo "params from 2: [${CUSTOM_CMD_ARR[*]:1:(${#CUSTOM_CMD_ARR[*]} - 1)}]"
+        echo "params from 1: [${CUSTOM_CMD_ARR[*]:1:(${#CUSTOM_CMD_ARR[*]} - 1)}]"
     fi
     if [[ ${#CUSTOM_CMD_ARR[*]} > 2 ]]; then
         echo "params from 2: [${CUSTOM_CMD_ARR[*]:2:(${#CUSTOM_CMD_ARR[*]} - 1)}]"
     fi
     ;;
 *)
-    adb $@
+    adb ${SPECIFIC_DEVICE} ${CODE} ${CUSTOM_CMD}
     ;;
 esac
