@@ -7,11 +7,16 @@ if [[ $line == *device ]]; then
     options+=("$serial")
 fi
 done <<< "$(adb devices)"
+for ((i=0; i<${#options[@]}; i++)); do
+    options[$i]="${options[$i]} [$(adb -s ${options[$i]} shell getprop ro.product.manufacturer)]"
+done
+
 if [[ $1 == "-s" ]]; then
-    for e in "${options[@]}"
+    for choice in "${options[@]}"
     do
-        if [ "$e" = "$2" ]; then
-            SPECIFIC_DEVICE="-s $e"
+        f=${choice%% *}
+        if [ "$f" = "$2" ]; then
+            SPECIFIC_DEVICE="-s $f"
         fi
     done
     if [ -z "${SPECIFIC_DEVICE}" ]; then
@@ -22,18 +27,22 @@ if [[ $1 == "-s" ]]; then
     CUSTOM_CMD=${CUSTOM_CMD/"-s"/""}
     # remove serial number
     CUSTOM_CMD=${CUSTOM_CMD/$2/""}
+    # 
+    CUSTOM_CMD=$(echo ${CUSTOM_CMD})
 else
     CODE=$1
     if [ ${#options[@]} -eq 0 ]; then
         echo "No devices!"
         exit 1
     elif [ ${#options[@]} -eq 1 ]; then
-        SPECIFIC_DEVICE="-s ${options[0]}"
+        f=${options[0]%% *}
+        SPECIFIC_DEVICE="-s $f"
     elif [ "${CODE}" != "devices" ]; then
         select choice in "${options[@]}"; do
         case $choice in
             *)
-                SPECIFIC_DEVICE="-s $choice"
+                f=${choice%% *}
+                SPECIFIC_DEVICE="-s $f"
                 break
                 ;;
         esac
@@ -335,6 +344,7 @@ case ${CODE} in
     adb ${SPECIFIC_DEVICE} shell ime set ${CUSTOM_CMD}
     ;;
 "test")
+    echo "Device:[${SPECIFIC_DEVICE}]"
     echo "\${CODE}: [${CODE}]"
     echo "\${CUSTOM_CMD}: [${CUSTOM_CMD}]"
     echo "\${CUSTOM_CMD} for intext: ${CUSTOM_CMD// /"%s"}"
